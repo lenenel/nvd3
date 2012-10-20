@@ -99,7 +99,6 @@ nv.models.pieChart = function() {
 
       if (showLegend) {
 	var legendPlacement = legendPosition.split("-")[0];
-	var legendAlign = legendPosition.split("-")[1];
         legend
           .width( availableWidth )
 	  .height( availableHeight )

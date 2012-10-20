@@ -17,6 +17,7 @@ nv.models.cumulativeLineChart = function() {
     , width = null
     , height = null
     , showLegend = true
+    , legendPosition = "top-right"
     , tooltips = true
     , showControls = true
     , rescaleY = true
@@ -183,20 +184,47 @@ nv.models.cumulativeLineChart = function() {
       // Legend
 
       if (showLegend) {
-        legend.width(availableWidth);
+        var legendPlacement = legendPosition.split("-")[0];
+        legend
+          .width(availableWidth)
+          .height(availableHeight)
+          .legendPosition(legendPosition);
 
         g.select('.nv-legendWrap')
             .datum(data)
             .call(legend);
 
-        if ( margin.top != legend.height()) {
-          margin.top = legend.height();
+        var legendSize = legend.direction() == "vertical" ? legend.width() : legend.height();
+
+        if (margin[legendPlacement] != legendSize) {
+          if (legendPlacement == "left" || legendPlacement == "bottom") {
+					  margin[legendPlacement] = legendSize + 25;
+          } else {
+            margin[legendPlacement] = legendSize;
+          }
           availableHeight = (height || parseInt(container.style('height')) || 400)
                              - margin.top - margin.bottom;
+          availableWidth = (width || parseInt(container.style('width')) || 960)
+                             - margin.left - margin.right;
         }
-
-        g.select('.nv-legendWrap')
-            .attr('transform', 'translate(0,' + (-margin.top) +')')
+        switch (legendPlacement) {
+          case "bottom":
+            wrap.select('.nv-legendWrap')
+              .attr('transform', 'translate(0, ' + (availableHeight + 7) +')');
+            break;
+          case "left":
+            wrap.select('.nv-legendWrap')
+              .attr('transform', 'translate(' + (-margin.left + 6) + ', 0)');
+            break;
+          case "right":
+            wrap.select('.nv-legendWrap')
+              .attr('transform', 'translate(' + (availableWidth + 7) +', 0)');
+            break;
+          case "top":
+          default:
+            wrap.select('.nv-legendWrap')
+              .attr('transform', 'translate(0, ' + (-margin.top) +')');
+        }
       }
 
       //------------------------------------------------------------
@@ -436,7 +464,13 @@ nv.models.cumulativeLineChart = function() {
     showLegend = _;
     return chart;
   };
-
+	
+  chart.legendPosition = function(_) {
+    if (!arguments.length) return legendPosition;
+		legendPosition = _;
+		return chart;
+  };
+  
   chart.tooltips = function(_) {
     if (!arguments.length) return tooltips;
     tooltips = _;
