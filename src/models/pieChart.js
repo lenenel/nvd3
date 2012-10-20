@@ -20,6 +20,7 @@ nv.models.pieChart = function() {
                '<p>' +  y + '</p>'
       }
     , noData = "No Data Available."
+    , legendPosition = "top-right"
     , dispatch = d3.dispatch('tooltipShow', 'tooltipHide')
     ;
 
@@ -97,22 +98,45 @@ nv.models.pieChart = function() {
       // Legend
 
       if (showLegend) {
+	var legendPlacement = legendPosition.split("-")[0];
+	var legendAlign = legendPosition.split("-")[1];
         legend
           .width( availableWidth )
-          .key(pie.x());
+	  .height( availableHeight )
+          .key(pie.x())
+	  .legendPosition(legendPosition);
 
         wrap.select('.nv-legendWrap')
             .datum(pie.values()(data[0]))
             .call(legend);
 
-        if ( margin.top != legend.height()) {
-          margin.top = legend.height();
+	var legendSize = legend.direction() == "vertical" ? legend.width() : legend.height();
+
+	if (margin[legendPlacement] != legendSize) {
+          margin[legendPlacement] = legendSize;
           availableHeight = (height || parseInt(container.style('height')) || 400)
                              - margin.top - margin.bottom;
+          availableWidth = (width || parseInt(container.style('width')) || 400)
+                             - margin.left - margin.right;
+	}
+        switch (legendPlacement) {
+          case "bottom":
+            wrap.select('.nv-legendWrap')
+              .attr('transform', 'translate(0, ' + (availableHeight) +')');
+            break;
+          case "left":
+            wrap.select('.nv-legendWrap')
+              .attr('transform', 'translate(' + (-margin.left + 6) + ', 0)');
+            break;
+          case "right":
+            wrap.select('.nv-legendWrap')
+              .attr('transform', 'translate(' + (availableWidth) +', 0)');
+            break;
+          case "top":
+          default:
+            wrap.select('.nv-legendWrap')
+              .attr('transform', 'translate(0, ' + (-margin.top) +')');
         }
-
-        wrap.select('.nv-legendWrap')
-            .attr('transform', 'translate(0,' + (-margin.top) +')');
       }
 
       //------------------------------------------------------------
@@ -231,6 +255,12 @@ nv.models.pieChart = function() {
     showLegend = _;
     return chart;
   };
+
+  chart.legendPosition = function(_) {
+    if (!arguments.length) return legendPosition;
+    legendPosition = _;
+    return chart;
+  }
 
   chart.tooltips = function(_) {
     if (!arguments.length) return tooltips;
