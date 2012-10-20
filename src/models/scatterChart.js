@@ -25,6 +25,7 @@ nv.models.scatterChart = function() {
     , showDistX    = false
     , showDistY    = false
     , showLegend   = true
+    , legendPosition = "top-right"
     , showControls = !!d3.fisheye
     , fisheye      = 0
     , pauseFisheye = false
@@ -157,7 +158,6 @@ nv.models.scatterChart = function() {
       gEnter.append('g').attr('class', 'nv-legendWrap');
       gEnter.append('g').attr('class', 'nv-controlsWrap');
 
-      wrap.attr('transform', 'translate(' + margin.left + ',' + margin.top + ')');
 
       //------------------------------------------------------------
 
@@ -166,22 +166,51 @@ nv.models.scatterChart = function() {
       // Legend
 
       if (showLegend) {
-        legend.width( availableWidth / 2 );
+        var legendPlacement = legendPosition.split("-")[0];
+        legend.width( availableWidth ) //There was availableWidth/2
+          .height(availableHeight)
+          .legendPosition(legendPosition);         
 
         wrap.select('.nv-legendWrap')
             .datum(data)
             .call(legend);
 
-        if ( margin.top != legend.height()) {
-          margin.top = legend.height();
+        var legendSize = legend.direction() == "vertical" ? legend.width() : legend.height();
+
+        if (margin[legendPlacement] != legendSize) {
+          if (legendPlacement == "bottom") {
+            margin[legendPlacement] = legendSize + 25;
+          } else if (legendPlacement == "left") {
+            margin[legendPlacement] = legendSize + 40;
+          } else {
+            margin[legendPlacement] = legendSize;
+          }
           availableHeight = (height || parseInt(container.style('height')) || 400)
                              - margin.top - margin.bottom;
+          availableWidth = (width || parseInt(container.style('width')) || 960)
+                             - margin.left - margin.right;
         }
-
-        wrap.select('.nv-legendWrap')
-            .attr('transform', 'translate(' + (availableWidth / 2) + ',' + (-margin.top) +')');
+        switch (legendPlacement) {
+          case "bottom":
+            wrap.select('.nv-legendWrap')
+              .attr('transform', 'translate(0, ' + (availableHeight + 7) +')');
+            break;
+          case "left":
+            wrap.select('.nv-legendWrap')
+              .attr('transform', 'translate(' + (-margin.left + 7) + ', 0)');
+            break;
+          case "right":
+            wrap.select('.nv-legendWrap')
+              .attr('transform', 'translate(' + (availableWidth + 7) +', 0)');
+            break;
+          case "top":
+          default:
+            wrap.select('.nv-legendWrap')
+              .attr('transform', 'translate(0, ' + (-margin.top) +')');
+        }
       }
 
+      wrap.attr('transform', 'translate(' + margin.left + ',' + margin.top + ')');
       //------------------------------------------------------------
 
 
@@ -492,6 +521,12 @@ nv.models.scatterChart = function() {
   chart.showLegend = function(_) {
     if (!arguments.length) return showLegend;
     showLegend = _;
+    return chart;
+  };
+
+  chart.legendPosition = function(_) {
+    if (!arguments.length) return legendPosition;
+    legendPosition = _;
     return chart;
   };
 

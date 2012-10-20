@@ -18,6 +18,7 @@ nv.models.stackedAreaChart = function() {
     , color = nv.utils.defaultColor() // a function that takes in d, i and returns color
     , showControls = true
     , showLegend = true
+    , legendPosition = "top-right"
     , tooltips = true
     , tooltip = function(key, x, y, e, graph) {
         return '<h3>' + key + '</h3>' +
@@ -130,21 +131,47 @@ nv.models.stackedAreaChart = function() {
       // Legend
 
       if (showLegend) {
+        var legendPlacement = legendPosition.split("-")[0];
         legend
-          .width( availableWidth * 2 / 3 );
+          .width( availableWidth ) //TODO: there was availableWidth*2/3
+          .height(availableHeight)
+          .legendPosition(legendPosition);
 
         g.select('.nv-legendWrap')
             .datum(data)
             .call(legend);
 
-        if ( margin.top != legend.height()) {
-          margin.top = legend.height();
+        var legendSize = legend.direction() == "vertical" ? legend.width() : legend.height();
+
+        if (margin[legendPlacement] != legendSize) {
+          if (legendPlacement == "bottom" || legendPlacement == "left") {
+            margin[legendPlacement] = legendSize + 25;
+          } else {
+            margin[legendPlacement] = legendSize;
+          }
           availableHeight = (height || parseInt(container.style('height')) || 400)
                              - margin.top - margin.bottom;
+          availableWidth = (width || parseInt(container.style('width')) || 960)
+                             - margin.left - margin.right;
         }
-
-        g.select('.nv-legendWrap')
-            .attr('transform', 'translate(' + ( availableWidth * 1 / 3 ) + ',' + (-margin.top) +')');
+        switch (legendPlacement) {
+          case "bottom":
+            wrap.select('.nv-legendWrap')
+              .attr('transform', 'translate(0, ' + (availableHeight + 12) +')');
+            break;
+          case "left":
+            wrap.select('.nv-legendWrap')
+              .attr('transform', 'translate(' + (-margin.left + 7) + ', 0)');
+            break;
+          case "right":
+            wrap.select('.nv-legendWrap')
+              .attr('transform', 'translate(' + (availableWidth + 7) +', 0)');
+            break;
+          case "top":
+          default:
+            wrap.select('.nv-legendWrap')
+              .attr('transform', 'translate(0, ' + (-margin.top) +')');
+        }
       }
 
       //------------------------------------------------------------
@@ -169,7 +196,7 @@ nv.models.stackedAreaChart = function() {
             .call(controls);
 
 
-        if ( margin.top != Math.max(controls.height(), legend.height()) ) {
+        if ( legendPosition.split("-")[0] == "top" && margin.top != Math.max(controls.height(), legend.height()) ) {
           margin.top = Math.max(controls.height(), legend.height());
           availableHeight = (height || parseInt(container.style('height')) || 400)
                              - margin.top - margin.bottom;
@@ -373,6 +400,12 @@ nv.models.stackedAreaChart = function() {
   chart.showLegend = function(_) {
     if (!arguments.length) return showLegend;
     showLegend = _;
+    return chart;
+  };
+
+  chart.legendPosition = function(_) {
+    if (!arguments.length) return legendPosition;
+    legendPosition = _;
     return chart;
   };
 
