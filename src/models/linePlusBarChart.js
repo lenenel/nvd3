@@ -20,6 +20,7 @@ nv.models.linePlusBarChart = function() {
     , getY = function(d) { return d.y }
     , color = nv.utils.defaultColor()
     , showLegend = true
+    , legendPosition = "top-right"
     , tooltips = true
     , tooltip = function(key, x, y, e, graph) {
         return '<h3>' + key + '</h3>' +
@@ -132,21 +133,6 @@ nv.models.linePlusBarChart = function() {
               })
             });
 
-      x   .domain(d3.extent(d3.merge(series1.concat(series2)), function(d) { return d.x } ))
-          .range([0, availableWidth]);
-
-
-
-          /*
-      x   .domain(d3.extent(d3.merge(data.map(function(d) { return d.values })), getX ))
-          .range([0, availableWidth]);
-
-      y1  .domain(d3.extent(d3.merge(dataBars), function(d) { return d.y } ))
-          .range([availableHeight, 0]);
-
-      y2  .domain(d3.extent(d3.merge(dataLines), function(d) { return d.y } ))
-          .range([availableHeight, 0]);
-         */
 
       //------------------------------------------------------------
 
@@ -172,7 +158,11 @@ nv.models.linePlusBarChart = function() {
       // Legend
 
       if (showLegend) {
-        legend.width( availableWidth / 2 );
+        var legendPlacement = legendPosition.split("-")[0];
+        legend
+          .width( availableWidth )//TODO: there was availableWidth/2
+          .height(availableHeight)
+          .legendPosition(legendPosition);;
 
         g.select('.nv-legendWrap')
             .datum(data.map(function(series) {
@@ -182,15 +172,55 @@ nv.models.linePlusBarChart = function() {
             }))
           .call(legend);
 
-        if ( margin.top != legend.height()) {
-          margin.top = legend.height();
+        var legendSize = legend.direction() == "vertical" ? legend.width() : legend.height();
+
+        if (margin[legendPlacement] != legendSize) {
+          if (legendPlacement == "bottom") {
+            margin[legendPlacement] = legendSize + 25;
+          } else if (legendPlacement == "left" || legendPlacement == "right") {
+            margin[legendPlacement] = legendSize + 60;
+          } else {
+            margin[legendPlacement] = legendSize;
+          }
           availableHeight = (height || parseInt(container.style('height')) || 400)
                              - margin.top - margin.bottom;
+          availableWidth = (width || parseInt(container.style('width')) || 960)
+                             - margin.left - margin.right;
         }
-
-        g.select('.nv-legendWrap')
-            .attr('transform', 'translate(' + ( availableWidth / 2 ) + ',' + (-margin.top) +')');
+        switch (legendPlacement) {
+          case "bottom":
+            wrap.select('.nv-legendWrap')
+              .attr('transform', 'translate(0, ' + (availableHeight + 7) +')');
+            break;
+          case "left":
+            wrap.select('.nv-legendWrap')
+              .attr('transform', 'translate(' + (-margin.left + 6) + ', 0)');
+            break;
+          case "right":
+            wrap.select('.nv-legendWrap')
+              .attr('transform', 'translate(' + (availableWidth + 60 + 7) +', 0)');
+            break;
+          case "top":
+          default:
+            wrap.select('.nv-legendWrap')
+              .attr('transform', 'translate(0, ' + (-margin.top) +')');
+        }
       }
+
+
+      x   .domain(d3.extent(d3.merge(series1.concat(series2)), function(d) { return d.x } ))
+          .range([0, availableWidth]);
+
+      /*
+      x   .domain(d3.extent(d3.merge(data.map(function(d) { return d.values })), getX ))
+          .range([0, availableWidth]);
+
+      y1  .domain(d3.extent(d3.merge(dataBars), function(d) { return d.y } ))
+          .range([availableHeight, 0]);
+
+      y2  .domain(d3.extent(d3.merge(dataLines), function(d) { return d.y } ))
+          .range([availableHeight, 0]);
+         */
 
       //------------------------------------------------------------
 
@@ -393,6 +423,12 @@ nv.models.linePlusBarChart = function() {
   chart.showLegend = function(_) {
     if (!arguments.length) return showLegend;
     showLegend = _;
+    return chart;
+  };
+  
+  chart.legendPosition = function(_) {
+    if (!arguments.length) return legendPosition;
+    legendPosition = _;
     return chart;
   };
 

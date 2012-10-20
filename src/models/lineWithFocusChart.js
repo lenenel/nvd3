@@ -26,6 +26,7 @@ nv.models.lineWithFocusChart = function() {
     , x2
     , y2
     , showLegend = true
+    , legendPosition = "top-right"
     , brushExtent = null
     , tooltips = true
     , tooltip = function(key, x, y, e, graph) {
@@ -154,20 +155,49 @@ nv.models.lineWithFocusChart = function() {
       // Legend
 
       if (showLegend) {
-        legend.width(availableWidth);
+        var legendPlacement = legendPosition.split("-")[0];
+        legend.width(availableWidth)
+          .height(availableHeight1 + availableHeight2)
+          .legendPosition(legendPosition);
 
         g.select('.nv-legendWrap')
             .datum(data)
             .call(legend);
 
-        if ( margin.top != legend.height()) {
-          margin.top = legend.height();
-          availableHeight1 = (height || parseInt(container.style('height')) || 400)
-                             - margin.top - margin.bottom - height2;
-        }
+        var legendSize = legend.direction() == "vertical" ? legend.width() : legend.height(),
+          correction = 0;
 
-        g.select('.nv-legendWrap')
-            .attr('transform', 'translate(0,' + (-margin.top) +')')
+
+        if (legendPlacement == "bottom") {
+          margin2[legendPlacement] = legendSize + 25;
+          correction = legendSize;
+        } else if (legendPlacement == "left") {
+          margin[legendPlacement] = legendSize + 25;
+        } else {
+          margin[legendPlacement] = legendSize;
+        }
+        availableHeight1 = (height || parseInt(container.style('height')) || 400)
+                           - margin.top - margin.bottom - height2 - correction;
+        availableWidth = (width || parseInt(container.style('width')) || 960)
+                           - margin.left - margin.right;
+        switch (legendPlacement) {
+          case "bottom":
+            wrap.select('.nv-legendWrap')
+              .attr('transform', 'translate(0, ' + (availableHeight1 + availableHeight2 + margin.bottom + margin2.top + 7) +')');
+            break;
+          case "left":
+            wrap.select('.nv-legendWrap')
+              .attr('transform', 'translate(' + (-margin.left + 6) + ', 0)');
+            break;
+          case "right":
+            wrap.select('.nv-legendWrap')
+              .attr('transform', 'translate(' + (availableWidth + 7) +', 0)');
+            break;
+          case "top":
+          default:
+            wrap.select('.nv-legendWrap')
+              .attr('transform', 'translate(0, ' + (-margin.top) +')');
+        }
       }
 
       //------------------------------------------------------------
@@ -504,6 +534,12 @@ nv.models.lineWithFocusChart = function() {
   chart.showLegend = function(_) {
     if (!arguments.length) return showLegend;
     showLegend = _;
+    return chart;
+  };
+  
+  chart.legendPosition = function(_) {
+    if (!arguments.length) return legendPosition;
+    legendPosition = _;
     return chart;
   };
 
