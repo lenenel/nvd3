@@ -9,6 +9,7 @@ nv.models.multiChart = function() {
       width = null, 
       height = null,
       showLegend = true,
+      legendPosition = "top-right",
       tooltips = true,
       tooltip = function(key, x, y, e, graph) {
         return '<h3>' + key + '</h3>' +
@@ -81,9 +82,6 @@ nv.models.multiChart = function() {
               })
             })
 
-      x   .domain(d3.extent(d3.merge(series1.concat(series2)), function(d) { return d.x } ))
-          .range([0, availableWidth]);
-
       var wrap = container.selectAll('g.wrap.multiChart').data([data]);
       var gEnter = wrap.enter().append('g').attr('class', 'wrap nvd3 multiChart').append('g');
 
@@ -101,7 +99,10 @@ nv.models.multiChart = function() {
       var g = wrap.select('g');
 
       if (showLegend) {
-        legend.width( availableWidth / 2 );
+        var legendPlacement = legendPosition.split("-")[0];
+        legend.width( availableWidth) //TODO: there was availableWidth/2
+          .height(availableHeight)
+          .legendPosition(legendPosition);         
 
         g.select('.legendWrap')
             .datum(data.map(function(series) { 
@@ -111,15 +112,41 @@ nv.models.multiChart = function() {
             }))
           .call(legend);
 
-        if ( margin.top != legend.height()) {
-          margin.top = legend.height();
+        var legendSize = legend.direction() == "vertical" ? legend.width() : legend.height();
+
+        if (margin[legendPlacement] != legendSize) {
+          if (legendPlacement == "left" || legendPlacement == "bottom" || legendPlacement == "right") {
+            margin[legendPlacement] = legendSize + 25;
+          } else {
+            margin[legendPlacement] = legendSize;
+          }
           availableHeight = (height || parseInt(container.style('height')) || 400)
                              - margin.top - margin.bottom;
+          availableWidth = (width || parseInt(container.style('width')) || 960)
+                             - margin.left - margin.right;
         }
-
-        g.select('.legendWrap')
-            .attr('transform', 'translate(' + ( availableWidth / 2 ) + ',' + (-margin.top) +')');
+        switch (legendPlacement) {
+          case "bottom":
+            wrap.select('.legendWrap')
+              .attr('transform', 'translate(0, ' + (availableHeight + 7) +')');
+            break;
+          case "left":
+            wrap.select('.legendWrap')
+              .attr('transform', 'translate(' + (-margin.left + 6) + ', 0)');
+            break;
+          case "right":
+            wrap.select('.legendWrap')
+              .attr('transform', 'translate(' + (availableWidth + 25 + 7) +', 0)');
+            break;
+          case "top":
+          default:
+            wrap.select('.legendWrap')
+              .attr('transform', 'translate(0, ' + (-margin.top) +')');
+        }
       }
+
+      x   .domain(d3.extent(d3.merge(series1.concat(series2)), function(d) { return d.x } ))
+          .range([0, availableWidth]);
 
 
       lines1
@@ -424,6 +451,12 @@ nv.models.multiChart = function() {
   chart.showLegend = function(_) {
     if (!arguments.length) return showLegend;
     showLegend = _;
+    return chart;
+  };
+
+  chart.legendPosition = function(_) {
+    if (!arguments.length) return legendPosition;
+    legendPosition = _;
     return chart;
   };
 
