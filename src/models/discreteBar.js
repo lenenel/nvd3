@@ -58,7 +58,7 @@ nv.models.discreteBar = function() {
       var seriesData = (xDomain && yDomain) ? [] : // if we know xDomain and yDomain, no need to calculate
             data.map(function(d) {
               return d.values.map(function(d,i) {
-                return { x: getX(d,i), y: parseFloat(getY(d,i)), y0: d.y0 }
+                return { x: getX(d,i), y: getY(d,i), y0: d.y0 }
               })
             });
 
